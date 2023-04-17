@@ -1,5 +1,4 @@
-﻿using System.Net;
-using AutoFixture;
+﻿using AutoFixture;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -27,41 +26,13 @@ public abstract class TestBase : IAsyncLifetime
         TestOutputHelper = testOutputHelper;
     }
     
-    public async virtual Task InitializeAsync()
+    public virtual Task InitializeAsync()
     {
-        await WaitServiceReadyAsync();
+        return Task.FromResult(Task.CompletedTask);
     }
 
     public virtual Task DisposeAsync()
     {
         return Task.CompletedTask;
-    }
-    
-    private async Task WaitServiceReadyAsync()
-    {
-        using var client = Factory.CreateClient();
-
-        var healthy = false;
-        var ready = false;
-        const int maxRetries = 30;
-        var retryCount = 0;
-        while ((!healthy || !ready) && retryCount < maxRetries)
-        {
-            await Task.Delay(1000);
-
-            var healthResult = await client.GetAsync("/health");
-            var readyResult = await client.GetAsync("/ready");
-            healthy = healthResult.StatusCode == HttpStatusCode.OK;
-            ready = readyResult.StatusCode == HttpStatusCode.OK;
-            
-            retryCount++;
-            if ((!healthy || !ready) && retryCount == maxRetries)
-            {
-                TestOutputHelper.WriteLine(await healthResult.Content.ReadAsStringAsync());
-                TestOutputHelper.WriteLine(await readyResult.Content.ReadAsStringAsync());
-                
-                throw new Exception($"Service not ready after {maxRetries} seconds.");
-            }
-        }
     }
 }

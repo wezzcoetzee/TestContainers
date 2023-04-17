@@ -11,15 +11,15 @@ public interface ISqlConnectionFactory
 
 public class SqlConnectionFactory : ISqlConnectionFactory
 {
-    private readonly SqlConnection _sqlConnection;
+    private readonly string _connectionString;
 
     public SqlConnectionFactory(IOptions<ConnectionStringOptions> connectionStrings)
     {
-        _sqlConnection = new SqlConnection(connectionStrings.Value.UserDb);
+        _connectionString = connectionStrings.Value.UserDb;
     }
 
     public SqlConnection CreateConnection()
     {
-        return _sqlConnection;
+        return new SqlConnection(_connectionString);
     }
 }

@@ -1,24 +1,33 @@
 using TestContainers.Entities;
 using TestContainers.Factories;
+using TestContainers.Options;
 using TestContainers.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Configuration
+    .SetBasePath(Directory.GetCurrentDirectory())
+    .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
+
+var configuration = builder.Configuration;
+builder.Services
+    .Configure<ConnectionStringOptions>(configuration.GetSection(nameof(ConnectionStringOptions)));
+
 builder.Services.AddSingleton<ISqlConnectionFactory, SqlConnectionFactory>();
-builder.Services.AddSingleton<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
 
 var app = builder.Build();
 
-app.MapGet("/api/users", async (IUserRepository userRepository) => await userRepository.GetUsersAsync());
-app.MapGet("/api/users/{id}", async (IUserRepository userRepository, int id) => await userRepository.GetUserAsync(id));
-app.MapPost("/api/users", async (IUserRepository userRepository, User user) => await userRepository.AddUserAsync(user));
+app.MapGet("/api/users", async (IUserRepository userRepository) => await userRepository.GetAllAsync());
+app.MapGet("/api/users/{id}", async (IUserRepository userRepository, int id) => await userRepository.GetAsync(id));
+app.MapPost("/api/users", async (IUserRepository userRepository, User user) => await userRepository.AddAsync(user));
 app.MapPut("/api/users/{id}", async (IUserRepository userRepository, int id, User user) =>
 {
     user.Id = id;
-    await userRepository.UpdateUserAsync(user);
+    await userRepository.UpdateAsync(user);
 });
 app.MapDelete("/api/users/{id}",
-    async (IUserRepository userRepository, int id) => await userRepository.DeleteUserAsync(id));
+    async (IUserRepository userRepository, int id) => await userRepository.DeleteAsync(id));
 
 
 app.Run();
